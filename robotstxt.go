@@ -10,8 +10,6 @@ import (
 
 // RobotsData represents a robots.txt file.
 type RobotsData struct {
-	Path       string
-	Host       string
 	Sitemaps   []string
 	UserAgents map[string]UserAgent
 }
@@ -142,11 +140,11 @@ func (rb *RobotsData) getApplicableRules(userAgent string) []Rule {
 func (rb *RobotsData) parseRules(scanner *bufio.Scanner) error {
 	rb.UserAgents = make(map[string]UserAgent)
 
-	scanner.Split(bufio.ScanLines)
-
 	var currentUserAgent string
 	rules := make(map[string][]Rule)
 	delays := make(map[string]*int)
+
+	scanner.Split(bufio.ScanLines)
 
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
