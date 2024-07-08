@@ -26,6 +26,3 @@ jobs:
 
     - name: Test
       run: go test -v ./...
-
-    - name: Linter
-      run: go run golang.org/x/lint/golint -set_exit_status $(go list ./...)

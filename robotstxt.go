@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-
-	_ "golang.org/x/lint"
 )
 
 // RobotsData represents a robots.txt file.
