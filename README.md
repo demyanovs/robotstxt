@@ -15,7 +15,7 @@ go get github.com/demyanovs/robotstxt
 ## Usage
 Here are examples of how to parse a robots.txt file.
 
-From a URL:
+From a response (from URL as an example):
 ```
 resp, err := http.Get("https://www.example.com/robots.txt")
 if err != nil {
@@ -29,12 +29,12 @@ robots, err := robotstxt.FromResponse(resp)
 
 From a string:
 ```
-robots, err = robotstxt.FromString("User-agent: * Disallow: /search Allow: /search/about CCrawl-delay: 5")
+robots, err = robotstxt.FromString("User-agent: *\nDisallow: /search\nAllow: /search/about\nCrawl-delay: 5")
 ```
 
 From a slice of bytes: 
 ```
-robots, err := robotstxt.FromBytes([]byte("User-agent: * Disallow: /search Allow: /search/about CCrawl-delay: 5"))
+robots, err := robotstxt.FromBytes([]byte("User-agent: *\nDisallow: /search\nAllow: /search/about\nCrawl-delay: 5"))
 ```
 
 To get a specific user-agent:

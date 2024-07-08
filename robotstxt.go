@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	_ "golang.org/x/lint"
 )
 
 // RobotsData represents a robots.txt file.
@@ -46,9 +48,10 @@ var rulesKeysSlice = []robotsRuleKey{
 	sitemapRuleKey,
 }
 
-// ErrorNoSuchUserAgent is returned when there is no such user agent in robots.txt file.
 var (
-	ErrorNoSuchUserAgent  = errors.New("no such user agent")
+	// ErrorNoSuchUserAgent is returned when there is no such user agent in UserAgents.
+	ErrorNoSuchUserAgent = errors.New("no such user agent")
+	// ErrorMissingUserAgent is returned when there is no user agent in robots.txt file.
 	ErrorMissingUserAgent = errors.New("missing user agent")
 )
 
@@ -143,8 +146,6 @@ func (rb *RobotsData) parseRules(scanner *bufio.Scanner) error {
 	var currentUserAgent string
 	rules := make(map[string][]Rule)
 	delays := make(map[string]*int)
-
-	scanner.Split(bufio.ScanLines)
 
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
