@@ -1,3 +1,4 @@
+// Package robotstxt reads and interprets robots.txt files into a struct.
 package robotstxt
 
 import (
