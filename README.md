@@ -1,4 +1,4 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/demyanovs/urlcrawler.svg)](https://pkg.go.dev/github.com/demyanovs/urlcrawler)
+[![Go Reference](https://pkg.go.dev/badge/github.com/demyanovs/robotstxt.svg)](https://pkg.go.dev/github.com/demyanovs/robotstxt)
 
 # RobotsTXT
 RobotsTXT is a robots.txt parser written in Go. The parser reads and interprets robots.txt files into a struct. 
