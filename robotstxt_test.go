@@ -16,7 +16,6 @@ var (
 	crawlDelay7 = 7
 )
 
-var xxx = ""
 var robotsStr = "User-agent: *\nCrawl-delay: 5\nDisallow: /search/advanced\nAllow: /search/about\nDisallow: /groups\nAllow: /news\nAllow: /blog\nDisallow: /user\n\n# Comment\nUser-agent: OtherBot\nDisallow: /maps/api/\nAllow: /maps/\nDisallow: /maps/private\n\nUser-agent: spambot\nDisallow: /\n\nSitemap: https://www.example.com/sitemap1.xml\nSitemap: https://www.example.com/sitemap2.xml"
 var robotsStrNotValid = "Disallow: /search/advanced\nAllow: /search/about\nDisallow: /groups\nAllow: /news\nAllow: /blog\nDisallow: /user\n\n# Comment\nUser-agent: OtherBot\nDisallow: /maps/api/\nAllow: /maps/\nDisallow: /maps/private\n\nUser-agent: spambot\nDisallow: /\n\nSitemap: https://www.example.com/sitemap1.xml\nSitemap: https://www.example.com/sitemap2.xml"
 
@@ -183,14 +182,14 @@ func TestFromBytes_Success(t *testing.T) {
 	require.Equal(t, &robotsDataExpected, robots)
 }
 
-func TestGetUserAgentRules_UnknownUserAgent_Error(t *testing.T) {
-	_, err := robotsDataResult.GetUserAgent("unknownUserAgent")
+func TestUserAgentRules_UnknownUserAgent_Error(t *testing.T) {
+	_, err := robotsDataResult.UserAgent("unknownUserAgent")
 
 	require.ErrorIs(t, ErrorNoSuchUserAgent, err)
 }
 
-func TestGetUserAgentRules_WildcardUserAgent_Success(t *testing.T) {
-	userAgent, err := robotsDataResult.GetUserAgent("*")
+func TestUserAgentRules_WildcardUserAgent_Success(t *testing.T) {
+	userAgent, err := robotsDataResult.UserAgent("*")
 
 	require.NoError(t, err)
 	require.Equal(t, &UserAgent{
@@ -225,8 +224,8 @@ func TestGetUserAgentRules_WildcardUserAgent_Success(t *testing.T) {
 	}, userAgent)
 }
 
-func TestGetUserAgentRules_SpambotUserAgent_Success(t *testing.T) {
-	userAgent, err := robotsDataResult.GetUserAgent("Spambot")
+func TestUserAgentRules_SpambotUserAgent_Success(t *testing.T) {
+	userAgent, err := robotsDataResult.UserAgent("Spambot")
 
 	require.NoError(t, err)
 	require.Equal(t, &UserAgent{
@@ -240,21 +239,21 @@ func TestGetUserAgentRules_SpambotUserAgent_Success(t *testing.T) {
 	}, userAgent)
 }
 
-func TestGetCrawlDelay_UnknownUserAgent_Error(t *testing.T) {
-	_, err := robotsDataResult.GetCrawlDelay("unknownUserAgent")
+func TestCrawlDelay_UnknownUserAgent_Error(t *testing.T) {
+	_, err := robotsDataResult.CrawlDelay("unknownUserAgent")
 
 	require.ErrorIs(t, ErrorNoSuchUserAgent, err)
 }
 
-func TestGetCrawlDelay_WildcardUserAgent_Success(t *testing.T) {
-	crawlDelay, err := robotsDataResult.GetCrawlDelay("*")
+func TestCrawlDelay_WildcardUserAgent_Success(t *testing.T) {
+	crawlDelay, err := robotsDataResult.CrawlDelay("*")
 
 	require.NoError(t, err)
 	require.Equal(t, 7, *crawlDelay)
 }
 
-func TestGetCrawlDelay_Nil_Success(t *testing.T) {
-	crawlDelay, err := robotsDataResult.GetCrawlDelay("Spambot")
+func TestCrawlDelay_Nil_Success(t *testing.T) {
+	crawlDelay, err := robotsDataResult.CrawlDelay("Spambot")
 
 	var num *int
 

@@ -87,8 +87,8 @@ func FromBytes(bytes []byte) (*RobotsData, error) {
 	return FromString(string(bytes))
 }
 
-// GetUserAgent returns rules for particular UserAgent.
-func (rb *RobotsData) GetUserAgent(userAgent string) (*UserAgent, error) {
+// UserAgent returns rules for particular UserAgent.
+func (rb *RobotsData) UserAgent(userAgent string) (*UserAgent, error) {
 	ua, ok := rb.UserAgents[userAgent]
 	if !ok {
 		return nil, ErrorNoSuchUserAgent
@@ -96,8 +96,8 @@ func (rb *RobotsData) GetUserAgent(userAgent string) (*UserAgent, error) {
 	return &ua, nil
 }
 
-// GetCrawlDelay returns crawl delay for particular UserAgent.
-func (rb *RobotsData) GetCrawlDelay(userAgent string) (*int, error) {
+// CrawlDelay returns crawl delay for particular UserAgent.
+func (rb *RobotsData) CrawlDelay(userAgent string) (*int, error) {
 	ua, ok := rb.UserAgents[userAgent]
 	if !ok {
 		return nil, ErrorNoSuchUserAgent
@@ -112,7 +112,7 @@ func (rb *RobotsData) GetCrawlDelay(userAgent string) (*int, error) {
 
 // IsAllowed checks if the URL is allowed for the user agent.
 func (rb *RobotsData) IsAllowed(userAgent string, URL string) bool {
-	applicableRules := rb.getApplicableRules(userAgent)
+	applicableRules := rb.applicableRules(userAgent)
 
 	// Check the rules from most specific to the least specific
 	for _, rule := range applicableRules {
@@ -124,8 +124,8 @@ func (rb *RobotsData) IsAllowed(userAgent string, URL string) bool {
 	return true
 }
 
-// getApplicableRules retrieves rules for a specific user-agent.
-func (rb *RobotsData) getApplicableRules(userAgent string) []Rule {
+// applicableRules retrieves rules for a specific user-agent.
+func (rb *RobotsData) applicableRules(userAgent string) []Rule {
 	// Exact match
 	if u, exists := rb.UserAgents[userAgent]; exists {
 		return u.Rules

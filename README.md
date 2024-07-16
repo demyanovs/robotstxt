@@ -41,7 +41,7 @@ robots, err := robotstxt.FromBytes([]byte("User-agent: *\nDisallow: /search\nAll
 
 To get a specific user-agent:
 ```
-userAgent, err := robots.GetUserAgent("*")
+userAgent, err := robots.UserAgent("*")
 ```
 
 To check if a URL is allowed for a specific user-agent:
@@ -51,7 +51,7 @@ isAllowed := robots.IsAllowed("*", "/search")
 
 To get the crawl delay for a specific user-agent:
 ```
-crawlDealy, err := robots.GetCrawlDelay("*")
+crawlDealy, err := robots.CrawlDelay("*")
 ```
 
 ## Contributing
