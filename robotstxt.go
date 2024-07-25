@@ -4,6 +4,7 @@ package robotstxt
 import (
 	"bufio"
 	"errors"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -57,9 +58,8 @@ var (
 // FromResponse creates a new instance of RobotsData from an HTTP response.
 func FromResponse(resp *http.Response) (*RobotsData, error) {
 	r := RobotsData{}
-	scanner := bufio.NewScanner(resp.Body)
 
-	err := r.parseRules(scanner)
+	err := r.parseRules(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -70,11 +70,9 @@ func FromResponse(resp *http.Response) (*RobotsData, error) {
 // FromString creates a new instance of RobotsData from string.
 func FromString(text string) (*RobotsData, error) {
 	r := RobotsData{}
+	reader := strings.NewReader(text)
 
-	re := strings.NewReader(text)
-	scanner := bufio.NewScanner(re)
-
-	err := r.parseRules(scanner)
+	err := r.parseRules(reader)
 	if err != nil {
 		return nil, err
 	}
@@ -139,13 +137,14 @@ func (rb *RobotsData) applicableRules(userAgent string) []Rule {
 	return []Rule{}
 }
 
-func (rb *RobotsData) parseRules(scanner *bufio.Scanner) error {
+func (rb *RobotsData) parseRules(reader io.Reader) error {
 	rb.UserAgents = make(map[string]UserAgent)
 
 	var currentUserAgent string
 	rules := make(map[string][]Rule)
 	delays := make(map[string]*int)
 
+	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		rule, val := parseLine(line)
