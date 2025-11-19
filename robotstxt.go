@@ -87,6 +87,7 @@ func FromBytes(bytes []byte) (*RobotsData, error) {
 
 // UserAgent returns rules for particular UserAgent.
 func (rb *RobotsData) UserAgent(userAgent string) (*UserAgent, error) {
+	userAgent = strings.ToLower(userAgent)
 	ua, ok := rb.UserAgents[userAgent]
 	if !ok {
 		return nil, ErrorNoSuchUserAgent
@@ -96,6 +97,7 @@ func (rb *RobotsData) UserAgent(userAgent string) (*UserAgent, error) {
 
 // CrawlDelay returns crawl delay for particular UserAgent.
 func (rb *RobotsData) CrawlDelay(userAgent string) (*int, error) {
+	userAgent = strings.ToLower(userAgent)
 	ua, ok := rb.UserAgents[userAgent]
 	if !ok {
 		return nil, ErrorNoSuchUserAgent
@@ -109,21 +111,39 @@ func (rb *RobotsData) CrawlDelay(userAgent string) (*int, error) {
 }
 
 // IsAllowed checks if the URL is allowed for the user agent.
+// It applies the most specific (longest matching) rule according to robots.txt specification.
 func (rb *RobotsData) IsAllowed(userAgent string, URL string) bool {
+	if !strings.HasPrefix(URL, "/") {
+		URL = "/" + URL
+	}
+
 	applicableRules := rb.applicableRules(userAgent)
 
-	// Check the rules from most specific to the least specific
-	for _, rule := range applicableRules {
-		if strings.HasPrefix(URL, rule.Path) {
-			return rule.Allow
+	// Find the most specific (longest) matching rule
+	var matchedRuleIndex = -1
+	maxMatchLength := 0
+
+	for i, rule := range applicableRules {
+		if strings.HasPrefix(URL, rule.Path) && len(rule.Path) > maxMatchLength {
+			matchedRuleIndex = i
+			maxMatchLength = len(rule.Path)
 		}
 	}
 
+	// If a matching rule is found, return its permission
+	if matchedRuleIndex != -1 {
+		return applicableRules[matchedRuleIndex].Allow
+	}
+
+	// Default: allow access if no rules match
 	return true
 }
 
 // applicableRules retrieves rules for a specific user-agent.
+// User-agent matching is case-insensitive according to robots.txt specification.
 func (rb *RobotsData) applicableRules(userAgent string) []Rule {
+	userAgent = strings.ToLower(userAgent)
+
 	// Exact match
 	if u, exists := rb.UserAgents[userAgent]; exists {
 		return u.Rules
@@ -140,52 +160,85 @@ func (rb *RobotsData) applicableRules(userAgent string) []Rule {
 func (rb *RobotsData) parseRules(reader io.Reader) error {
 	rb.UserAgents = make(map[string]UserAgent)
 
-	var currentUserAgent string
+	var currentUserAgents []string
 	rules := make(map[string][]Rule)
 	delays := make(map[string]*int)
+	blockStarted := false // Flag indicating that we are processing a rules block
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		rule, val := parseLine(line)
+
 		if rule == userAgentRuleKey {
-			currentUserAgent = val
-			if _, exists := rules[currentUserAgent]; !exists {
-				rules[currentUserAgent] = []Rule{}
+			ua := strings.ToLower(val)
+
+			if blockStarted {
+				currentUserAgents = []string{ua}
+				blockStarted = false
+			} else {
+				currentUserAgents = append(currentUserAgents, ua)
 			}
 
-			delays[currentUserAgent] = nil
+			if _, exists := rules[ua]; !exists {
+				rules[ua] = []Rule{}
+			}
+			if _, exists := delays[ua]; !exists {
+				delays[ua] = nil
+			}
 		}
 
 		if rule == allowRuleKey {
-			if currentUserAgent == "" {
+			if len(currentUserAgents) == 0 {
 				return ErrorMissingUserAgent
 			}
 
-			rules[currentUserAgent] = append(rules[currentUserAgent], Rule{
-				Allow: true,
-				Path:  val,
-			})
+			blockStarted = true
+
+			for _, ua := range currentUserAgents {
+				rules[ua] = append(rules[ua], Rule{
+					Allow: true,
+					Path:  val,
+				})
+			}
 		}
 
 		if rule == disallowRuleKey {
-			if currentUserAgent == "" {
+			// Empty disallow means "allow all", so skip it
+			if val == "" {
+				continue
+			}
+
+			if len(currentUserAgents) == 0 {
 				return ErrorMissingUserAgent
 			}
 
-			rules[currentUserAgent] = append(rules[currentUserAgent], Rule{
-				Allow: false,
-				Path:  val,
-			})
+			blockStarted = true
+
+			for _, ua := range currentUserAgents {
+				rules[ua] = append(rules[ua], Rule{
+					Allow: false,
+					Path:  val,
+				})
+			}
 		}
 
 		if rule == crawlDelayRuleKey {
-			if currentUserAgent == "" {
+			if len(currentUserAgents) == 0 {
 				return ErrorMissingUserAgent
 			}
 
-			res, _ := strconv.Atoi(val)
-			delays[currentUserAgent] = &res
+			blockStarted = true
+
+			res, err := strconv.Atoi(val)
+			if err != nil {
+				// Skip invalid crawl-delay values
+				continue
+			}
+
+			for _, ua := range currentUserAgents {
+				delays[ua] = &res
+			}
 		}
 
 		if rule == sitemapRuleKey {
@@ -209,6 +262,11 @@ func (rb *RobotsData) parseRules(reader io.Reader) error {
 }
 
 func parseLine(line string) (robotsRuleKey, string) {
+	// Ignore comments and empty strings
+	if line == "" || strings.HasPrefix(line, "#") {
+		return unknownRuleKey, ""
+	}
+
 	parts := strings.SplitN(line, ":", 2)
 	if len(parts) != 2 {
 		return unknownRuleKey, ""
@@ -216,6 +274,11 @@ func parseLine(line string) (robotsRuleKey, string) {
 
 	key := strings.TrimSpace(parts[0])
 	value := strings.TrimSpace(parts[1])
+
+	// Remove inline comments from value
+	if idx := strings.Index(value, "#"); idx != -1 {
+		value = strings.TrimSpace(value[:idx])
+	}
 
 	for _, ruleKey := range rulesKeysSlice {
 		if strings.ToLower(key) == ruleKey.toString() {
